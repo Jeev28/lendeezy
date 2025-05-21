@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "521866849581",
+    "project_id": "lendeezy-c2e9f",
+    "storage_bucket": "lendeezy-c2e9f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:521866849581:android:414daf1c15ecd0a95c77a4",
+        "android_client_info": {
+          "package_name": "com.example.lendeezy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6M9zWkKmEiA0MzMlzYK4e954upAW_AEU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

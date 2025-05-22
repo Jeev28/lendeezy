@@ -21,6 +21,7 @@ data class BottomNavItem(
 
 @Composable
 fun NavBar(navController: NavController) {
+    // list of screens that can be accessed from top level of app
     val navItems = listOf(
         BottomNavItem("Home", "home", Icons.Filled.Home),
         BottomNavItem("Add", "add", Icons.Filled.Add),
@@ -30,6 +31,7 @@ fun NavBar(navController: NavController) {
     val navEntry = navController.currentBackStackEntryAsState().value
     val currentPage = navEntry?.destination
 
+    // for each nav item, make it an item in the bottom nav bar
     NavigationBar {
         navItems.forEach { item ->
             NavigationBarItem(

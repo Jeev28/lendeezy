@@ -46,6 +46,7 @@ fun NavGraph(userViewModel: UserViewModel) {
     }
 
     // define navigation graph
+    // use Scaffold to add bottom navbar
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             LoginScreen(userViewModel)

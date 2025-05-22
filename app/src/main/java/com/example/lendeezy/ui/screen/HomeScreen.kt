@@ -1,6 +1,7 @@
 package com.example.lendeezy.ui.screen
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,20 +24,27 @@ import coil.compose.AsyncImage
  * Later change to be full list of products
  */
 @Composable
-fun HomeScreen(viewModel: UserViewModel) {
+fun HomeScreen(viewModel: UserViewModel, padding: PaddingValues) {
     val userState by viewModel.userState.collectAsState()
     val user = (userState as? UserState.Success)?.user
 
-    Column(modifier = Modifier.padding(24.dp)) {
+    Column(modifier = Modifier
+        .padding(24.dp)
+        .padding(padding)) {
+
+
+        /*
         Text("Welcome, ${user?.name ?: "User"}")
-        Text("${user?.email ?: "Email"}")
+        Text(user?.email ?: "Email")
         AsyncImage(
             model = user?.photoUrl,
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-        )
+        )*/
+
+
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { viewModel.signOut() }) {
             Text("Sign Out")

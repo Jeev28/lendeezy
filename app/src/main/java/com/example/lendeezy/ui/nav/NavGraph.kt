@@ -1,5 +1,6 @@
 package com.example.lendeezy.ui.nav
 
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -7,8 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.lendeezy.ui.screen.AddScreen
 import com.example.lendeezy.ui.screen.HomeScreen
 import com.example.lendeezy.ui.screen.LoginScreen
+import com.example.lendeezy.ui.screen.UserScreen
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 
@@ -48,7 +51,25 @@ fun NavGraph(userViewModel: UserViewModel) {
             LoginScreen(userViewModel)
         }
         composable("home") {
-            HomeScreen(userViewModel)
+            Scaffold(
+                bottomBar = { NavBar(navController) }
+            ) { paddingValues ->
+                HomeScreen(userViewModel, paddingValues)
+            }
+        }
+        composable("add") {
+            Scaffold(
+                bottomBar = { NavBar(navController) }
+            ) { paddingValues ->
+                AddScreen(paddingValues)
+            }
+        }
+        composable("user") {
+            Scaffold(
+                bottomBar = { NavBar(navController) }
+            ) { paddingValues ->
+                UserScreen(paddingValues)
+            }
         }
     }
 

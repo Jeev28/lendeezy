@@ -10,44 +10,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.lendeezy.ui.nav.NavGraph
 import com.example.lendeezy.ui.theme.LendeezyTheme
+import com.example.lendeezy.ui.viewmodel.UserViewModel
+import com.google.firebase.FirebaseApp
 
+/**
+ * Launches the app and calls NavGraph to render screens
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // initialises Firebase
+        FirebaseApp.initializeApp(this)
         setContent {
-            LendeezyTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
-            }
+            val viewModel = remember { UserViewModel() }
+            NavGraph(viewModel)
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        Modifier
-            .padding(80.dp) // Outer padding; outside background
-            .background(color = Color.Cyan) // Solid element background color
-            .padding(16.dp) // Inner padding; inside background, around text)
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LendeezyTheme {
-        Greeting("Android")
     }
 }

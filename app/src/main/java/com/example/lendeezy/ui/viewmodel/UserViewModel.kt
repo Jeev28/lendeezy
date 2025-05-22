@@ -45,6 +45,9 @@ class UserViewModel(
                 if (firebaseUser != null) {
                     // only writes to Firestore if they don't already exist
                     userRepository.createNewUser(firebaseUser)
+
+
+
                     _userState.value = UserState.Success(firebaseUser)
                 } else {
                     _userState.value = UserState.Error("No logged-in user")
@@ -59,5 +62,9 @@ class UserViewModel(
     fun signOut() {
         userRepository.signOut()
         _userState.value = UserState.Idle
+    }
+
+    fun setError(message: String) {
+        _userState.value = UserState.Error(message)
     }
 }

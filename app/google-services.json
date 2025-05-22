@@ -12,7 +12,20 @@
           "package_name": "com.example.lendeezy"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "521866849581-d3opk5qp5r51d81im0ifnvvr73d85207.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lendeezy",
+            "certificate_hash": "b9eb9351eff9d5bd7d5660678601ccb32b49dc4d"
+          }
+        },
+        {
+          "client_id": "521866849581-gu915cr2i2tu32pgndfoqvi2cs46c72q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC6M9zWkKmEiA0MzMlzYK4e954upAW_AEU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "521866849581-gu915cr2i2tu32pgndfoqvi2cs46c72q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

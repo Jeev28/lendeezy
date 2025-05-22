@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Lendeezy</string>
+    <!--<string name="default_web_client_id">AIzaSyC6M9zWkKmEiA0MzMlzYK4e954upAW_AEU</string>-->
+    <string name="default_web_client_id">521866849581-gu915cr2i2tu32pgndfoqvi2cs46c72q.apps.googleusercontent.com</string>
 </resources>

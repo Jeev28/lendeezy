@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +31,19 @@ class MainActivity : ComponentActivity() {
         FirebaseApp.initializeApp(this)
         setContent {
             val viewModel = remember { UserViewModel() }
-            NavGraph(viewModel)
+            LendeezyTheme(
+                darkTheme = isSystemInDarkTheme(),
+                dynamicColor = false
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavGraph(viewModel)
+                }
+            }
         }
     }
 }

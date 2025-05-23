@@ -1,5 +1,6 @@
 package com.example.lendeezy.ui.nav
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +54,7 @@ fun NavGraph(userViewModel: UserViewModel) {
         }
         composable("home") {
             Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
                 HomeScreen(userViewModel, paddingValues)
@@ -60,6 +62,7 @@ fun NavGraph(userViewModel: UserViewModel) {
         }
         composable("add") {
             Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
                 AddScreen(paddingValues)
@@ -67,9 +70,10 @@ fun NavGraph(userViewModel: UserViewModel) {
         }
         composable("user") {
             Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
-                UserScreen(paddingValues)
+                UserScreen(userViewModel, paddingValues)
             }
         }
     }

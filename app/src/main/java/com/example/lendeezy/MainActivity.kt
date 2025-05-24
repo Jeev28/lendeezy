@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         // initialises Firebase
         FirebaseApp.initializeApp(this)
         setContent {
-            val viewModel = remember { UserViewModel() }
+
             LendeezyTheme(
                 darkTheme = isSystemInDarkTheme(),
                 dynamicColor = false
@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
                         .background(MaterialTheme.colorScheme.background),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavGraph(viewModel)
+                    NavGraph()
                 }
             }
         }

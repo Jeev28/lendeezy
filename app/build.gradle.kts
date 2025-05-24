@@ -101,6 +101,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
 
 

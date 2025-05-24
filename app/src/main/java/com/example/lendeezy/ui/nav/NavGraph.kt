@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,6 +14,7 @@ import com.example.lendeezy.ui.screen.AddScreen
 import com.example.lendeezy.ui.screen.HomeScreen
 import com.example.lendeezy.ui.screen.LoginScreen
 import com.example.lendeezy.ui.screen.UserScreen
+import com.example.lendeezy.ui.viewmodel.AddProductViewModel
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 
@@ -21,7 +23,8 @@ import com.example.lendeezy.ui.viewmodel.UserViewModel
  * Starts at Login page
  */
 @Composable
-fun NavGraph(userViewModel: UserViewModel) {
+fun NavGraph() {
+    val userViewModel: UserViewModel = viewModel()
     val navController = rememberNavController()
     val userState by userViewModel.userState.collectAsState()
 
@@ -65,7 +68,8 @@ fun NavGraph(userViewModel: UserViewModel) {
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
-                AddScreen(paddingValues)
+                val addViewModel: AddProductViewModel = viewModel()
+                AddScreen(addViewModel,paddingValues)
             }
         }
         composable("user") {

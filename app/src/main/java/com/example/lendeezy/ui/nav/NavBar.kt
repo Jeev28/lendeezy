@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -34,7 +35,7 @@ fun NavBar(navController: NavController) {
     // list of screens that can be accessed from top level of app
     val navItems = listOf(
         BottomNavItem("Home", "home", Icons.Filled.Home),
-        BottomNavItem("Add", "add", Icons.Filled.Add),
+        BottomNavItem("Lend", "add", Icons.Filled.AddCircle),
         BottomNavItem("User", "user", Icons.Filled.Person)
     )
 

@@ -11,13 +11,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lendeezy.ui.nav.NavGraph
 import com.example.lendeezy.ui.theme.LendeezyTheme
+import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 import com.google.firebase.FirebaseApp
 
@@ -27,9 +31,18 @@ import com.google.firebase.FirebaseApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // initialises Firebase
+        // initialise firebase
         FirebaseApp.initializeApp(this)
+
         setContent {
+            val userViewModel: UserViewModel = viewModel()
+            val userState by userViewModel.userState.collectAsState()
+
+            // find start destination based on user state
+            val startDestination = when (userState) {
+                is UserState.Success -> "home"
+                else -> "login"
+            }
 
             LendeezyTheme(
                 darkTheme = isSystemInDarkTheme(),
@@ -41,7 +54,8 @@ class MainActivity : ComponentActivity() {
                         .background(MaterialTheme.colorScheme.background),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavGraph()
+                    // call navigation logic to determine what to show
+                    NavGraph(startDestination = startDestination, userViewModel = userViewModel)
                 }
             }
         }

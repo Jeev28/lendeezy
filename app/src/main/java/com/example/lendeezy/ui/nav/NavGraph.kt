@@ -1,3 +1,5 @@
+// Used CoPilot for Debugging only on this page (dependency import error)
+
 package com.example.lendeezy.ui.nav
 
 import androidx.compose.material3.MaterialTheme
@@ -23,35 +25,11 @@ import com.example.lendeezy.ui.viewmodel.UserViewModel
  * Starts at Login page
  */
 @Composable
-fun NavGraph() {
-    val userViewModel: UserViewModel = viewModel()
+fun NavGraph(startDestination: String, userViewModel: UserViewModel) {
     val navController = rememberNavController()
-    val userState by userViewModel.userState.collectAsState()
 
-    // navigate to Home screen when login is successful
-    LaunchedEffect(userState) {
-        when (userState) {
-            // go to home after login
-            is UserState.Success -> {
-                navController.navigate("home") {
-                    popUpTo("login") { inclusive = true }
-                }
-            }
-            // go to login after sign out
-            is UserState.Idle -> {
-                navController.navigate("login") {
-                    popUpTo("home") { inclusive = true }
-                }
-            }
-            else -> {} // nothing for loading or error states
-        }
-
-
-    }
-
-    // define navigation graph
-    // use Scaffold to add bottom navbar
-    NavHost(navController = navController, startDestination = "login") {
+    // defines routes with dynamic start destination
+    NavHost(navController = navController, startDestination = startDestination) {
         composable("login") {
             LoginScreen(userViewModel)
         }
@@ -68,8 +46,9 @@ fun NavGraph() {
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
+                // send add product view model in
                 val addViewModel: AddProductViewModel = viewModel()
-                AddScreen(addViewModel,paddingValues)
+                AddScreen(addViewModel, paddingValues)
             }
         }
         composable("user") {
@@ -81,5 +60,4 @@ fun NavGraph() {
             }
         }
     }
-
 }

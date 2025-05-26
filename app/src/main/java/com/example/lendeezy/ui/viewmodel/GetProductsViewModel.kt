@@ -49,4 +49,29 @@ class GetProductsViewModel : ViewModel() {
             }
         }
     }
+
+    // for Product Screen for detailed product view
+    private val _selectedProduct = MutableStateFlow<Product?>(null)
+    val selectedProduct = _selectedProduct.asStateFlow()
+
+    /**
+     * Gets a specific product for Product Screen by id
+     */
+    fun fetchProductById(productId: String) {
+        viewModelScope.launch {
+            try {
+                _state.value = ProductListState.Loading
+                val snapshot = Firebase.firestore.collection("products").document(productId).get().await()
+                val product = snapshot.toObject(Product::class.java)
+                if (product != null) {
+                    _selectedProduct.value = product
+                    _state.value = ProductListState.Success(listOf(product)) // Optional
+                } else {
+                    _state.value = ProductListState.Error("Product not found")
+                }
+            } catch (e: Exception) {
+                _state.value = ProductListState.Error("Failed to load product")
+            }
+        }
+    }
 }

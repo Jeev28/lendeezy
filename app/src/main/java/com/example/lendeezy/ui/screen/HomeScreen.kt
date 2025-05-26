@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 import coil.compose.AsyncImage
@@ -65,7 +67,7 @@ import com.example.lendeezy.ui.viewmodel.ProductListState
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(productViewModel: GetProductsViewModel, userViewModel: UserViewModel, padding: PaddingValues) {
+fun HomeScreen(navController: NavController, productViewModel: GetProductsViewModel, userViewModel: UserViewModel, padding: PaddingValues) {
     val userState by userViewModel.userState.collectAsState()
     val user = (userState as? UserState.Success)?.user
 
@@ -193,7 +195,7 @@ fun HomeScreen(productViewModel: GetProductsViewModel, userViewModel: UserViewMo
                         contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
                         items(products) { product ->
-                            ProductCard(product = product)
+                            ProductCard(product = product, navController = navController)
                         }
                     }
                 }
@@ -210,9 +212,12 @@ fun HomeScreen(productViewModel: GetProductsViewModel, userViewModel: UserViewMo
     }
 }
 
-// Product Card component
+/**
+ * Product Card component
+ * On click of it, opens Product Screen
+ */
 @Composable
-fun ProductCard(product: Product) {
+fun ProductCard(product: Product, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -222,7 +227,8 @@ fun ProductCard(product: Product) {
                 width = 1.dp,
                 color = Color.Black,
                 shape = RoundedCornerShape(16.dp)
-            ),
+            )
+            .clickable {navController.navigate("product/${product.id}")},
         shape = RoundedCornerShape(16.dp),
     ) {
         ProductCardContent(product)

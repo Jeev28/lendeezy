@@ -17,6 +17,7 @@ import com.example.lendeezy.ui.screen.HomeScreen
 import com.example.lendeezy.ui.screen.LoginScreen
 import com.example.lendeezy.ui.screen.UserScreen
 import com.example.lendeezy.ui.viewmodel.AddProductViewModel
+import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 
@@ -38,7 +39,8 @@ fun NavGraph(startDestination: String, userViewModel: UserViewModel) {
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
-                HomeScreen(userViewModel, paddingValues)
+                val getProductsViewModel: GetProductsViewModel = viewModel()
+                HomeScreen(getProductsViewModel, userViewModel, paddingValues)
             }
         }
         composable("add") {

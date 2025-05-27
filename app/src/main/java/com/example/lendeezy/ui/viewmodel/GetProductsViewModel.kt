@@ -71,7 +71,7 @@ class GetProductsViewModel : ViewModel() {
         val current = (_state.value as? ProductListState.Success)?.products ?: return
 
         val filtered = current.filter { product ->
-            val matchesQuery = product.name.contains(query, ignoreCase = true)
+            val matchesQuery = product.name.contains(query, ignoreCase = true) || product.location.contains(query, ignoreCase = true)
             val matchesCategory = selectedCategory == "All" || product.category == selectedCategory
             val matchesStatus = when (selectedFilter) {
                 "All" -> true

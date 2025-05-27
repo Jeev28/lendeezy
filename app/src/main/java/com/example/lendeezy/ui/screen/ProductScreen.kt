@@ -3,6 +3,7 @@ package com.example.lendeezy.ui.screen
 import android.content.Intent
 import android.icu.util.Calendar
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
 
@@ -31,8 +32,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.lendeezy.data.model.Product
 import com.example.lendeezy.data.model.isCurrentlyBorrowed
+import com.example.lendeezy.data.repository.UserRepository
 import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
 import com.example.lendeezy.ui.viewmodel.ProductListState
+import com.example.lendeezy.ui.viewmodel.ReservationState
+import com.example.lendeezy.ui.viewmodel.ReserveProductsViewModel
 import com.example.lendeezy.ui.viewmodel.SellerUserState
 import com.example.lendeezy.ui.viewmodel.SellerViewModel
 import com.example.lendeezy.ui.viewmodel.UserState
@@ -43,7 +47,7 @@ import com.example.lendeezy.ui.viewmodel.UserViewModel
  * Shows detailed view of a specific clicked on product
  */
 @Composable
-fun ProductScreen(padding: PaddingValues, productId: String, productViewModel: GetProductsViewModel = viewModel()) {
+fun ProductScreen(padding: PaddingValues, productId: String, productViewModel: GetProductsViewModel = viewModel(),     reserveViewModel: ReserveProductsViewModel = viewModel()) {
     val productState by productViewModel.productState.collectAsState()
     val selectedProduct by productViewModel.selectedProduct.collectAsState()
 
@@ -98,9 +102,32 @@ fun ProductScreen(padding: PaddingValues, productId: String, productViewModel: G
  * 4. Rent or borrow status
  */
 @Composable
-fun ProductDetailContent(product: Product) {
+fun ProductDetailContent(
+    product: Product,
+    reserveViewModel: ReserveProductsViewModel = viewModel(),
+    userRepository: UserRepository = UserRepository()
+) {
 
-    // get is borrowed and until when
+    val reservationState by reserveViewModel.reservationState.collectAsState()
+    val context = LocalContext.current
+
+    // state changes for adding reservations
+    LaunchedEffect(reservationState) {
+        when (reservationState) {
+            is ReservationState.Success -> {
+                Toast.makeText(context, "Product reservation made.", Toast.LENGTH_SHORT).show()
+                reserveViewModel.clearReservationState()
+            }
+            is ReservationState.Error -> {
+                val error = (reservationState as ReservationState.Error).message
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                reserveViewModel.clearReservationState()
+            }
+            else -> {}
+        }
+    }
+
+    // get is borrowed and borrowed until when from reservations list
     val (isBorrowed, borrowedUntil) = product.isCurrentlyBorrowed()
 
     Column(
@@ -125,7 +152,16 @@ fun ProductDetailContent(product: Product) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            BorrowStatus(isBorrowed = isBorrowed, borrowedUntil = borrowedUntil)
+            BorrowStatus(
+                isBorrowed = isBorrowed,
+                borrowedUntil = borrowedUntil,
+                onConfirm = { start, end ->
+                    val userId = userRepository.getCurrentUserId()
+                    if (userId != null) {
+                        reserveViewModel.makeReservation(product, userId, start, end)
+                    }
+                }
+            )
         }
 
     }
@@ -246,129 +282,126 @@ fun BorrowStatus(
     var startDate by remember { mutableStateOf<String?>(null) }
     var endDate by remember { mutableStateOf<String?>(null) }
 
-    // is product is not available, show message saying this
-    if (isBorrowed) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Borrowed until: $borrowedUntil")
-        }
-        // if available, show rent button
-    } else {
-        Column(
-            Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // show Rent button
-            if (!showDatePickers) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // show Rent button
+        if (!showDatePickers) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // if borrowed so until when, else say available
+                if (isBorrowed) {
+                    Text("Borrowed until: $borrowedUntil")
+
+                } else {
                     Text("Available for rent")
-                    Button(
-                        onClick = { showDatePickers = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-                    ) {
-                        Text("Rent")
-                    }
-                }
-                // on click of rent button, show select start and end dates, cancel and confirm buttons
-            } else {
-                // row with date selectors
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Start date
-                    Button(
-                        onClick = {
-                            // on click, show date picker
-                            val calendar = Calendar.getInstance()
-                            android.app.DatePickerDialog(
-                                context,
-                                { _, year, month, day ->
-                                    val date = Calendar.getInstance().apply {
-                                        set(year, month, day)
-                                    }
-                                    startDate = formatter.format(date.time)
-                                },
-                                calendar.get(Calendar.YEAR),
-                                calendar.get(Calendar.MONTH),
-                                calendar.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                    ) {
-                        // text shows selected start date or message
-                        Text(startDate ?: "Start Date")
-                    }
-                    // End date
-                    Button(
-                        onClick = {
-                            // on click, opens date selector
-                            val calendar = Calendar.getInstance()
-                            android.app.DatePickerDialog(
-                                context,
-                                { _, year, month, day ->
-                                    val date = Calendar.getInstance().apply {
-                                        set(year, month, day)
-                                    }
-                                    endDate = formatter.format(date.time)
-                                },
-                                calendar.get(Calendar.YEAR),
-                                calendar.get(Calendar.MONTH),
-                                calendar.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                    ) {
-                        // button shows selected end date or message
-                        Text(endDate ?: "End Date")
-                    }
                 }
 
-                // confirm and cancel buttons
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Button(
+                    onClick = { showDatePickers = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
                 ) {
-                    // confirm
-                    Button(
-                        onClick = {
-                            if (startDate != null && endDate != null) {
-                                onConfirm(startDate!!, endDate!!)
-                                showDatePickers = false
-                                startDate = null
-                                endDate = null
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                        // confirm button only enabled if start and end date selected
-                        enabled = startDate != null && endDate != null
-                    ) {
-                        Text("Confirm")
-                    }
+                    Text("Rent")
+                }
+            }
+            // on click of rent button, show select start and end dates, cancel and confirm buttons
+        } else {
+            // row with date selectors
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Start date
+                Button(
+                    onClick = {
+                        // on click, show date picker
+                        val calendar = Calendar.getInstance()
+                        android.app.DatePickerDialog(
+                            context,
+                            { _, year, month, day ->
+                                val date = Calendar.getInstance().apply {
+                                    set(year, month, day)
+                                }
+                                startDate = formatter.format(date.time)
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                ) {
+                    // text shows selected start date or message
+                    Text(startDate ?: "Start Date")
+                }
+                // End date
+                Button(
+                    onClick = {
+                        // on click, opens date selector
+                        val calendar = Calendar.getInstance()
+                        android.app.DatePickerDialog(
+                            context,
+                            { _, year, month, day ->
+                                val date = Calendar.getInstance().apply {
+                                    set(year, month, day)
+                                }
+                                endDate = formatter.format(date.time)
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                ) {
+                    // button shows selected end date or message
+                    Text(endDate ?: "End Date")
+                }
+            }
 
-                    // cancel button - hides date picker section and resets selected start and end date
-                    Button(
-                        onClick = {
+            // confirm and cancel buttons
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // confirm
+                Button(
+                    onClick = {
+                        if (startDate != null && endDate != null) {
+                            onConfirm(startDate!!, endDate!!)
                             showDatePickers = false
                             startDate = null
                             endDate = null
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                    ) {
-                        Text("Cancel")
-                    }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    // confirm button only enabled if start and end date selected
+                    enabled = startDate != null && endDate != null
+                ) {
+                    Text("Confirm")
+                }
+
+                // cancel button - hides date picker section and resets selected start and end date
+                Button(
+                    onClick = {
+                        showDatePickers = false
+                        startDate = null
+                        endDate = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Cancel")
                 }
             }
         }
+
     }
 }
 

@@ -46,6 +46,18 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.lendeezy.ui.viewmodel.AddProductState
 import com.example.lendeezy.ui.viewmodel.AddProductViewModel
 import com.example.lendeezy.ui.viewmodel.UserViewModel
+import android.Manifest
+import android.location.Geocoder
+import android.location.Location
+import androidx.compose.runtime.remember
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * Form for a user to create a new product to lend
@@ -104,6 +116,8 @@ fun AddScreen(viewModel: AddProductViewModel, padding: PaddingValues) {
                 location = viewModel.location,
                 onLocationChange = { viewModel.location = it }
             )
+            // location UI
+            LocationFormField(location = viewModel.location, onLocationChange = { viewModel.location = it })
             SubmitButton(onClick = { viewModel.submitProduct(context) })
         }
 
@@ -227,8 +241,95 @@ fun ProductFormFields(
     LendFormTextBox(value = description, onValueChange = onDescriptionChange, label = "Description", modifier = Modifier.fillMaxWidth())
     LendFormTextBox(value = category, onValueChange = onCategoryChange, label = "Category", modifier = Modifier.fillMaxWidth())
     LendFormTextBox(value = terms, onValueChange = onTermsChange, label = "Borrowing Terms", modifier = Modifier.fillMaxWidth())
-    LendFormTextBox(value = location, onValueChange = onLocationChange, label = "Location", modifier = Modifier.fillMaxWidth())
+    //LendFormTextBox(value = location, onValueChange = onLocationChange, label = "Location", modifier = Modifier.fillMaxWidth())
+
 }
+
+
+@Composable
+fun LocationFormField(
+    location: String,
+    onLocationChange: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    // remember for getting device location
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Column with text box for manual input and button
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.End
+    ) {
+        LendFormTextBox(
+            value = location,
+            onValueChange = onLocationChange,
+            label = "Location",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // on click, gets device current location
+        OutlinedButton(onClick = {
+            coroutineScope.launch {
+                // ensure app has location permissions granted
+                val permissionGranted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PermissionChecker.PERMISSION_GRANTED
+
+                // if permission not granted show error
+                if (!permissionGranted) {
+                    Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                try {
+                    // cancellation token used if request is cancelled
+                    val cancellationToken = com.google.android.gms.tasks.CancellationTokenSource()
+
+                    // get device current location
+                    fusedLocationClient.getCurrentLocation(
+                        com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+                        cancellationToken.token
+                    ).addOnSuccessListener { loc: Location? ->
+                        if (loc != null) {
+                            // use geocoder to convert lat and long into actual address
+                            val geocoder = Geocoder(context)
+                            // get one matching address
+                            val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+                            if (!addresses.isNullOrEmpty()) {
+                                val address = addresses[0]
+                                val addressString = listOfNotNull(
+                                    // street name
+                                    address.thoroughfare,
+                                    // city
+                                    address.locality,
+                                    // region
+                                    address.adminArea,
+                                    // post code
+                                    address.postalCode
+                                ).joinToString(", ")
+                                onLocationChange(addressString)
+                            } else {
+                                Toast.makeText(context, "Could not get current address", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "Location not found", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error getting location. Try again later.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }) {
+            Text("Use Current Location")
+        }
+    }
+}
+
 
 /**
  * full width button to submit

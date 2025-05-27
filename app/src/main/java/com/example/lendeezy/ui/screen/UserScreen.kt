@@ -3,6 +3,9 @@ package com.example.lendeezy.ui.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -10,6 +13,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -17,13 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.lendeezy.data.model.User
+import com.example.lendeezy.ui.viewmodel.RecentlyViewedViewModel
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 
 @Composable
-fun UserScreen(userViewModel: UserViewModel, padding: PaddingValues) {
+fun UserScreen(navController: NavController, userViewModel: UserViewModel, recentlyViewedViewModel: RecentlyViewedViewModel, padding: PaddingValues) {
 
     val userState by userViewModel.userState.collectAsState()
     val user = (userState as? UserState.Success)?.user
@@ -50,6 +56,51 @@ fun UserScreen(userViewModel: UserViewModel, padding: PaddingValues) {
         // sign out button
         SignOutSection(userViewModel)
 
+        RecentlyViewedSection(navController, recentlyViewedViewModel)
+
+    }
+}
+
+
+/**
+ * Recently viewed grid of product cards
+ */
+@Composable
+fun RecentlyViewedSection(navController: NavController,viewModel: RecentlyViewedViewModel) {
+    // get products from local storage using view model
+    LaunchedEffect(Unit) {
+        viewModel.loadRecentlyViewed()
+    }
+
+    val products by viewModel.recentlyViewed.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text("Recently Viewed", style = MaterialTheme.typography.titleMedium)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (products.isEmpty()) {
+            Text("No recently viewed products.")
+        } else {
+            // show grid of 2 showing a product card defined in Home Screen
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp), // Adjust as needed
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(products) { product ->
+                    ProductCard(product = product, navController = navController)
+                }
+            }
+        }
     }
 }
 

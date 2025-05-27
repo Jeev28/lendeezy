@@ -35,6 +35,7 @@ import com.example.lendeezy.data.model.isCurrentlyBorrowed
 import com.example.lendeezy.data.repository.UserRepository
 import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
 import com.example.lendeezy.ui.viewmodel.ProductListState
+import com.example.lendeezy.ui.viewmodel.RecentlyViewedViewModel
 import com.example.lendeezy.ui.viewmodel.ReservationState
 import com.example.lendeezy.ui.viewmodel.ReserveProductsViewModel
 import com.example.lendeezy.ui.viewmodel.SellerUserState
@@ -47,13 +48,26 @@ import com.example.lendeezy.ui.viewmodel.UserViewModel
  * Shows detailed view of a specific clicked on product
  */
 @Composable
-fun ProductScreen(padding: PaddingValues, productId: String, productViewModel: GetProductsViewModel = viewModel(),     reserveViewModel: ReserveProductsViewModel = viewModel()) {
+fun ProductScreen(
+    padding: PaddingValues,
+    productId: String,
+    productViewModel: GetProductsViewModel = viewModel(),
+    reserveViewModel: ReserveProductsViewModel = viewModel(),
+    recentlyViewedViewModel: RecentlyViewedViewModel = viewModel()
+) {
     val productState by productViewModel.productState.collectAsState()
     val selectedProduct by productViewModel.selectedProduct.collectAsState()
 
     // fetch the product details for product ID
     LaunchedEffect(productId) {
         productViewModel.fetchProductById(productId)
+    }
+
+    // once selected product has loaded, save to local storage for recently viewed
+    LaunchedEffect(selectedProduct) {
+        selectedProduct?.let { product ->
+            recentlyViewedViewModel.saveProductLocally(product)
+        }
     }
 
 

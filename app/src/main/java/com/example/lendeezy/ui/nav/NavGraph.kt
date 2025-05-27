@@ -29,6 +29,7 @@ import com.example.lendeezy.ui.screen.ProductScreen
 import com.example.lendeezy.ui.screen.UserScreen
 import com.example.lendeezy.ui.viewmodel.AddProductViewModel
 import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
+import com.example.lendeezy.ui.viewmodel.RecentlyViewedViewModel
 import com.example.lendeezy.ui.viewmodel.UserState
 import com.example.lendeezy.ui.viewmodel.UserViewModel
 
@@ -70,7 +71,8 @@ fun NavGraph(startDestination: String, userViewModel: UserViewModel) {
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { NavBar(navController) }
             ) { paddingValues ->
-                UserScreen(userViewModel, paddingValues)
+                val recentlyViewedViewModel: RecentlyViewedViewModel = viewModel()
+                UserScreen(navController,userViewModel,recentlyViewedViewModel, paddingValues)
             }
         }
 

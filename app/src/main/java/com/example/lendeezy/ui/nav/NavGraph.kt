@@ -2,8 +2,10 @@
 
 package com.example.lendeezy.ui.nav
 
+import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -74,17 +77,56 @@ fun NavGraph(startDestination: String, userViewModel: UserViewModel) {
         composable("product/{productId}") { backStackEntry ->
             // get product ID
             val productId = backStackEntry.arguments?.getString("productId") ?: ""
+
+            // get product from firebase
+            val context = LocalContext.current
+            val productViewModel: GetProductsViewModel = viewModel()
+            val selectedProduct by productViewModel.selectedProduct.collectAsState()
+            LaunchedEffect(productId) {
+                productViewModel.fetchProductById(productId)
+            }
+
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
                 // bottom bar is the nav bar
                 bottomBar = { NavBar(navController) },
-                // top bar is a back button and title
+                // top bar is a back button and title and android sharesheet
                 topBar = {
                     TopAppBar(
                         title = { Text("Product Details") },
                         navigationIcon = {
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            }
+                        },
+                        // Android Sharesheet
+                        actions = {
+                            if (selectedProduct != null) {
+                                IconButton(onClick = {
+                                    val product = selectedProduct!!
+                                    // on click on share button, use Android Sharesheet
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(
+                                            Intent.EXTRA_TEXT,
+                                            """
+                                                View this product on Lendeezy:
+                                                
+                                                ${product.name}
+                                                Location: ${product.location}
+                                                
+                                                View it here: lendeezy://product/${product.id}
+                                            """.trimIndent()
+                                        )
+                                    }
+                                    // share options using sharesheet
+                                    context.startActivity(
+                                        Intent.createChooser(shareIntent, "Share product via")
+                                    )
+                                }) {
+                                    // share icon inside button
+                                    Icon(Icons.Default.Share, contentDescription = "Share")
+                                }
                             }
                         }
                     )

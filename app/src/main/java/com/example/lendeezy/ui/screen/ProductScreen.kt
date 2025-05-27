@@ -297,7 +297,7 @@ fun OwnerInfo(product: Product ,ownerId: String, sellerViewModel: SellerViewMode
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(owner.name, style = MaterialTheme.typography.bodyMedium)
+                    Text(owner.name, style = MaterialTheme.typography.bodyLarge)
                 }
 
                 // button which opens Mail app to email seller

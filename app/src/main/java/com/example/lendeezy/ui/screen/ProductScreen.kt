@@ -30,6 +30,7 @@ import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.lendeezy.data.model.Product
+import com.example.lendeezy.data.model.isCurrentlyBorrowed
 import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
 import com.example.lendeezy.ui.viewmodel.ProductListState
 import com.example.lendeezy.ui.viewmodel.SellerUserState
@@ -98,6 +99,10 @@ fun ProductScreen(padding: PaddingValues, productId: String, productViewModel: G
  */
 @Composable
 fun ProductDetailContent(product: Product) {
+
+    // get is borrowed and until when
+    val (isBorrowed, borrowedUntil) = product.isCurrentlyBorrowed()
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -120,7 +125,7 @@ fun ProductDetailContent(product: Product) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            BorrowStatus(isBorrowed = product.isBorrowed, borrowedUntil = product.borrowedUntil)
+            BorrowStatus(isBorrowed = isBorrowed, borrowedUntil = borrowedUntil)
         }
 
     }

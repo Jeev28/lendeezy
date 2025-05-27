@@ -90,7 +90,6 @@ class AddProductViewModel : ViewModel() {
                     photoUrl = downloadUrl.toString(),
                     terms = terms,
                     location = location,
-                    isBorrowed = false
                 )
                 // upload product to Firebase
                 Firebase.firestore.collection("products")

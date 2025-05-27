@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lendeezy.data.model.Product
+import com.example.lendeezy.data.model.isCurrentlyBorrowed
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,22 +33,56 @@ class GetProductsViewModel : ViewModel() {
     private val _state = MutableStateFlow<ProductListState>(ProductListState.Idle)
     val productState = _state.asStateFlow()
 
-    // fetch products from firebase
+    private var allProducts: List<Product> = emptyList()
+
+    private val _filteredProducts = MutableStateFlow<List<Product>>(emptyList())
+    val filteredProducts = _filteredProducts.asStateFlow()
+
+
+    /**
+     * fetch products from firebase
+     */
     fun fetchProducts(currentUserId: String) {
         viewModelScope.launch {
             try {
+                // set to loading
                 _state.value = ProductListState.Loading
+                // get all products from database except ones the current user made
                 val snapshot = Firebase.firestore.collection("products").get().await()
-                // all products as objects
-                val allProducts = snapshot.toObjects(Product::class.java)
-                // remove products the logged in user has made
-                val products = allProducts.filter{ it.ownerId != currentUserId}
-                _state.value = ProductListState.Success(products) // set state to success
+                val fetchedProducts = snapshot.toObjects(Product::class.java)
+                    .filter { it.ownerId != currentUserId }
+
+                allProducts = fetchedProducts
+                _state.value = ProductListState.Success(fetchedProducts)
+                // set default to All for filters
+                _filteredProducts.value = fetchedProducts
             } catch (e: Exception) {
                 Log.e("ProductViewModel", "Failed to get products", e)
                 _state.value = ProductListState.Error(e.message ?: "Unknown error occurred")
             }
         }
+    }
+
+    /**
+     * apply filters to all products
+     * Search term, filter (all, available, borrowed) and categories
+     */
+    fun applyFilterAndSearch(query: String, selectedFilter: String, selectedCategory: String = "All") {
+        val current = (_state.value as? ProductListState.Success)?.products ?: return
+
+        val filtered = current.filter { product ->
+            val matchesQuery = product.name.contains(query, ignoreCase = true)
+            val matchesCategory = selectedCategory == "All" || product.category == selectedCategory
+            val matchesStatus = when (selectedFilter) {
+                "All" -> true
+                "Available" -> !product.isCurrentlyBorrowed().first
+                "Borrowed" -> product.isCurrentlyBorrowed().first
+                else -> true
+            }
+            matchesQuery && matchesCategory && matchesStatus
+        }
+
+        _filteredProducts.value = filtered
     }
 
     // for Product Screen for detailed product view

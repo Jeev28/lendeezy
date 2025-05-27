@@ -32,10 +32,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -75,13 +79,28 @@ fun HomeScreen(navController: NavController, productViewModel: GetProductsViewMo
         user?.uid?.let { productViewModel.fetchProducts(it) }
     }
 
-    // for search and filters
+    // for search
     var searchQuery by remember { mutableStateOf("") }
+    // for availability filters
     val filters = listOf("All", "Available", "Borrowed")
     var selectedFilter by remember { mutableStateOf(filters.first())}
+    // for category filters
+    var selectedCategory by remember { mutableStateOf("All") }
+    var expanded by remember { mutableStateOf(false) }
 
     //for getting products from view model
     val productState by productViewModel.productState.collectAsState()
+    val filteredProducts by productViewModel.filteredProducts.collectAsState()
+
+    val allProducts = (productState as? ProductListState.Success)?.products ?: emptyList()
+    val categories = listOf("All") + allProducts.map { it.category }.distinct()
+
+
+    // apply filters when search or selected filter changes
+    LaunchedEffect(searchQuery, selectedFilter, selectedCategory) {
+        productViewModel.applyFilterAndSearch(searchQuery, selectedFilter, selectedCategory)
+    }
+
 
 
     /**
@@ -98,60 +117,23 @@ fun HomeScreen(navController: NavController, productViewModel: GetProductsViewMo
 
     ) {
 
-        //=== Search Bar ===
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Search items...") },
-            leadingIcon = {
-                          Icon(
-                              imageVector = Icons.Default.Search,
-                              contentDescription = "Search",
-                              tint = Color.Black,
-                          )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(50))
-                .background(Color(0xFFF3EDE6)),
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color(0xFFF7F7F7),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-            ),
-            singleLine = true,
-            shape = RoundedCornerShape(50),
-        )
+        // === Search bar ===
+        SearchBar(searchQuery) { searchQuery = it }
 
         //=== Spacer ===
         Spacer(modifier = Modifier.height(12.dp))
 
-        //=== Filter badges ===
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(filters.size) { i ->
-                val filter = filters[i]
-                FilterChip(
-                    selected = (filter == selectedFilter),
-                    onClick = { selectedFilter = filter },
-                    label = { Text(filter) },
-                    shape = RoundedCornerShape(50),
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = Color.White,
-                        selectedContainerColor = Color.White,
-                        labelColor = Color.Black,
-                        selectedLabelColor = Color.Black
-                    ),
-                    border = BorderStroke(
-                        width = if (filter == selectedFilter) 2.dp else 1.dp,
-                        color = if (filter == selectedFilter) Color.Black else Color(0xFFA2A2A2)
-                    )
-
-                )
-            }
-        }
+        // === Filters ===
+        FilterRow(
+            filters = filters,
+            selectedFilter = selectedFilter,
+            onFilterSelected = { selectedFilter = it },
+            categories = categories,
+            selectedCategory = selectedCategory,
+            onCategorySelected = { selectedCategory = it },
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        )
 
         //=== Spacer ===
         Spacer(modifier = Modifier.height(16.dp))
@@ -175,9 +157,7 @@ fun HomeScreen(navController: NavController, productViewModel: GetProductsViewMo
 
             // if success and no items, show message, else show grid of items
             is ProductListState.Success -> {
-                val products = (productState as ProductListState.Success).products
-
-                if (products.isEmpty()) {
+                if (filteredProducts.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -194,13 +174,11 @@ fun HomeScreen(navController: NavController, productViewModel: GetProductsViewMo
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
-                        items(products) { product ->
+                        items(filteredProducts) { product ->
                             ProductCard(product = product, navController = navController)
                         }
                     }
                 }
-
-
             }
 
             ProductListState.Idle -> {
@@ -210,6 +188,133 @@ fun HomeScreen(navController: NavController, productViewModel: GetProductsViewMo
 
 
     }
+}
+
+/**
+ * Search bar for grid of products
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(searchQuery: String, onQueryChange: (String) -> Unit) {
+    //=== Search Bar ===
+    TextField(
+        value = searchQuery,
+        onValueChange = onQueryChange,
+        placeholder = { Text("Search items...") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Color.Black,
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50))
+            .background(Color(0xFFF3EDE6)),
+        colors = TextFieldDefaults.textFieldColors(
+            containerColor = Color(0xFFF7F7F7),
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        singleLine = true,
+        shape = RoundedCornerShape(50),
+    )
+}
+
+/**
+ * Row of filters
+ * Availability - All, Available, Borrowed
+ * Category filter
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterRow(
+    filters: List<String>,
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit,
+    categories: List<String>,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit
+) {
+    //=== Filter badges ===
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        items(filters.size) { i ->
+            val filter = filters[i]
+            FilterChip(
+                selected = (filter == selectedFilter),
+                onClick = { onFilterSelected(filter) },
+                label = { Text(filter) },
+                shape = RoundedCornerShape(50),
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = Color.White,
+                    selectedContainerColor = Color.White,
+                    labelColor = Color.Black,
+                    selectedLabelColor = Color.Black
+                ),
+                border = BorderStroke(
+                    width = if (filter == selectedFilter) 2.dp else 1.dp,
+                    color = if (filter == selectedFilter) Color.Black else Color(0xFFA2A2A2)
+                )
+
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    // category dropdown
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+    ) {
+        TextField(
+            value = selectedCategory,
+            onValueChange = {}, // can't edit it
+            readOnly = true,
+            label = { Text("Category") },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(50))
+                .border(1.dp, Color.Black, RoundedCornerShape(50))
+                .background(Color.White),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                disabledIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+            )
+        )
+
+        // dropdown of existing categories based on products shown on screen
+        ExposedDropdownMenu(
+            expanded = expanded,
+            // close expanded dropdown
+            onDismissRequest = { onExpandedChange(false) }
+        ) {
+            // add item to dropdown for each category
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(category) },
+                    onClick = {
+                        onCategorySelected(category)
+                        onExpandedChange(false)
+                    }
+                )
+            }
+        }
+    }
+
 }
 
 /**

@@ -49,6 +49,10 @@
 
         </activity>
         <receiver android:name=".NotificationReceiver" />
+        <provider
+            android:name="com.example.lendeezy.data.provider.FavouriteProductContentProvider"
+            android:authorities="com.example.lendeezy.provider"
+            android:exported="false" />
     </application>
 
 </manifest>

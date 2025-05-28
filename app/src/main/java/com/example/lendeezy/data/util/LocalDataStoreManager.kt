@@ -9,7 +9,9 @@ import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
 
-
+/**
+ * Uses local storage with Jetpack DataStore to hold recently viewed products
+ */
 private val Context.dataStore by preferencesDataStore(name = "recently_viewed")
 
 class LocalDataStoreManager(private val context: Context) {

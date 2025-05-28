@@ -107,5 +107,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.google.code.gson:gson:2.10.1")
 
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
 
 }

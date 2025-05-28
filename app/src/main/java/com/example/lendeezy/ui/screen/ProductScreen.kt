@@ -1,12 +1,16 @@
 package com.example.lendeezy.ui.screen
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
-import android.icu.util.Calendar
+import java.util.Calendar
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
-
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,9 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.lendeezy.NotificationReceiver
 import com.example.lendeezy.data.model.Product
 import com.example.lendeezy.data.model.isCurrentlyBorrowed
 import com.example.lendeezy.data.repository.UserRepository
+import com.example.lendeezy.data.util.hasExactAlarmPermission
+import com.example.lendeezy.data.util.requestExactAlarmPermission
+import com.example.lendeezy.data.util.scheduleNotification
 import com.example.lendeezy.ui.viewmodel.GetProductsViewModel
 import com.example.lendeezy.ui.viewmodel.ProductListState
 import com.example.lendeezy.ui.viewmodel.RecentlyViewedViewModel
@@ -277,6 +285,69 @@ fun ProductDetailMiddle(product: Product) {
 }
 
 
+
+/**
+ * Button for setting a reminder and allows to choose date and time
+ */
+@Composable
+fun SetReminderButton(onSchedule: (Calendar) -> Unit) {
+    val context = LocalContext.current
+
+    var selectedDate by remember { mutableStateOf<Calendar?>(null) }
+
+    Button(onClick = {
+        // check if app has permission for exact alarms
+        if (hasExactAlarmPermission(context)) {
+            // if yes, show date and time selectors
+            val now = Calendar.getInstance()
+
+            // open date picker
+            android.app.DatePickerDialog(
+                context,
+                { _, year, month, dayOfMonth ->
+                    val calendar = Calendar.getInstance().apply {
+                        set(year, month, dayOfMonth) // set chosen date on calendar
+                    }
+
+                    // after date picker, show time picker
+                    android.app.TimePickerDialog(
+                        context,
+                        { _, hour, minute ->
+                            // set chosen hour, minite, second at zero
+                            calendar.set(Calendar.HOUR_OF_DAY, hour)
+                            calendar.set(Calendar.MINUTE, minute)
+                            calendar.set(Calendar.SECOND, 0)
+                            selectedDate = calendar
+                            onSchedule(calendar)
+                        },
+                        // default on the time picker is current time
+                        now.get(Calendar.HOUR_OF_DAY),
+                        now.get(Calendar.MINUTE),
+                        false
+                    ).show()
+
+                },
+                // default date is current date on calendar
+                now.get(Calendar.YEAR),
+                now.get(Calendar.MONTH),
+                now.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        } else {
+            // if no permission granted, show message and request permission
+            requestExactAlarmPermission(context)
+            Toast.makeText(
+                context,
+                "Grant exact alarm permission to set a notification",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }) {
+        Text("Set Notification Reminder")
+    }
+}
+
+
+
 /**
  * If rented, show message it is rented, else show Rent button + renting UI
  */
@@ -295,6 +366,8 @@ fun BorrowStatus(
     // start and end date
     var startDate by remember { mutableStateOf<String?>(null) }
     var endDate by remember { mutableStateOf<String?>(null) }
+
+    var showReminderButton by remember { mutableStateOf(false) }
 
 
     Column(
@@ -393,6 +466,7 @@ fun BorrowStatus(
                             showDatePickers = false
                             startDate = null
                             endDate = null
+                            showReminderButton = true
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
@@ -416,8 +490,17 @@ fun BorrowStatus(
             }
         }
 
+        if (showReminderButton) {
+            SetReminderButton { calendar ->
+                scheduleNotification(context, calendar, "Lendeezy Reminder", "Don't forget your rental!")
+                Toast.makeText(context, "Reminder set!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
+
+
+
 
 /**
  * Show seller information
